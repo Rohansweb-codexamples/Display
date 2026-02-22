@@ -14,24 +14,67 @@
             font-family: 'Inter', sans-serif;
             background-color: #f4f1ea;
             transition: background-color 0.3s ease;
+            overflow-x: hidden;
+            perspective: 1000px;
         }
 
         .card-shadow {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
 
         .playing-animation {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .7; }
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: .8; }
         }
 
+        /* --- Crazy Floating & Rotating Animations --- */
+        @keyframes crazy-float-1 {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1) rotateX(0deg); }
+            33% { transform: translateY(-30px) rotate(5deg) scale(1.05) rotateX(10deg); }
+            66% { transform: translateY(15px) rotate(-3deg) scale(0.95) rotateY(10deg); }
+        }
+
+        @keyframes crazy-float-2 {
+            0%, 100% { transform: translateY(0) rotate(0deg) skew(0deg); }
+            50% { transform: translateY(-50px) rotate(-10deg) skew(5deg); }
+        }
+
+        @keyframes crazy-float-3 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, -20px) rotate(8deg); }
+            75% { transform: translate(-20px, 20px) rotate(-8deg); }
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(-1deg); }
+            50% { transform: rotate(1deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(2px, -2px); }
+            50% { transform: translate(-2px, 2px); }
+            75% { transform: translate(2px, 2px); }
+        }
+
+        .animate-playing-1 { animation: crazy-float-1 6s ease-in-out infinite; }
+        .animate-playing-2 { animation: crazy-float-2 7s ease-in-out infinite; }
+        .animate-playing-3 { animation: crazy-float-3 5s ease-in-out infinite; }
+        .animate-playing-form { animation: wobble 3s ease-in-out infinite; }
+        .shake-active { animation: shake 0.1s linear infinite; }
+
         .logo-img {
-            max-width: 120px;
+            max-width: 140px;
             height: auto;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .playing .logo-img {
+            transform: scale(1.2) rotate(360deg);
         }
 
         /* Fullscreen Button Styling */
@@ -48,8 +91,8 @@
         #lockModal {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -72,9 +115,18 @@
             pointer-events: none;
             z-index: 100;
         }
+
+        .rating-star:hover ~ .rating-star { color: #d6d3d1; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-10 px-4">
+<body id="mainBody" class="min-h-screen flex flex-col items-center py-10 px-4 pb-32">
+
+    <!-- Floating Background Elements -->
+    <div id="bgElements" class="fixed inset-0 pointer-events-none opacity-0 transition-opacity duration-1000">
+        <div class="absolute top-10 left-10 w-20 h-20 bg-orange-200 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-10 w-40 h-40 bg-blue-200 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 left-1/2 w-60 h-60 bg-yellow-100 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+    </div>
 
     <!-- Fullscreen Toggle Button -->
     <button id="fullscreenBtn" class="p-3 rounded-full card-shadow hover:bg-white transition-all active:scale-90 group" title="Toggle Fullscreen">
@@ -98,51 +150,82 @@
     <!-- Message Box for UI feedback -->
     <div id="msgBox">Fullscreen unavailable in this environment</div>
 
-    <!-- Header Section with Logo -->
-    <header class="text-center mb-12 flex flex-col items-center">
+    <!-- Header Section -->
+    <header id="siteHeader" class="text-center mb-12 flex flex-col items-center transition-all duration-500">
         <img src="https://rohansweb-codexamples.github.io/Display/logo.png" alt="Logo" class="logo-img mb-4">
-        <h1 class="text-4xl font-bold text-stone-800 mb-2">Cardboard Melodies</h1>
-        <p class="text-stone-600">A collection of cozy tunes and moments</p>
+        <h1 class="text-5xl font-extrabold text-stone-800 mb-2 tracking-tight">Cardboard Melodies</h1>
+        <p class="text-stone-600 text-lg">Step into a vibrant paper world</p>
     </header>
 
     <!-- Main Play Button -->
-    <div class="mb-16 text-center">
-        <button id="playBtn" class="bg-orange-600 hover:bg-orange-700 text-white text-2xl font-bold py-6 px-12 rounded-full shadow-lg transform transition active:scale-95 flex items-center gap-3 mx-auto">
+    <div class="mb-20 text-center relative z-10">
+        <button id="playBtn" class="bg-orange-600 hover:bg-orange-700 text-white text-3xl font-black py-8 px-16 rounded-full shadow-2xl transform transition active:scale-95 flex items-center gap-4 mx-auto border-4 border-white">
             <span id="btnIcon">▶</span>
             <span>PLAY</span>
         </button>
-        <p id="status" class="mt-4 text-sm font-medium text-stone-500 h-6 uppercase tracking-widest"></p>
+        <p id="status" class="mt-6 text-sm font-bold text-orange-800 h-6 uppercase tracking-[0.3em] drop-shadow-sm"></p>
     </div>
 
     <!-- Image Gallery -->
-    <main class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full">
-        <div class="group overflow-hidden rounded-2xl card-shadow bg-white p-2 transition hover:-translate-y-1">
-            <div class="w-full h-64 overflow-hidden rounded-xl">
-                <img src="https://rohansweb-codexamples.github.io/Display/Gemini_Generated_Image_xol8wjxol8wjxol8.png" 
-                     alt="Cardboard Town" 
-                     class="w-full h-full object-cover object-top">
+    <main class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl w-full mb-20">
+        <div id="card-1" class="gallery-card group overflow-hidden rounded-[2rem] card-shadow bg-white p-3 transition-all duration-1000 border-2 border-transparent hover:border-orange-200">
+            <div class="w-full h-80 overflow-hidden rounded-2xl relative">
+                <img src="https://rohansweb-codexamples.github.io/Display/Gemini_Generated_Image_xol8wjxol8wjxol8.png" alt="Cardboard Town" class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <p class="p-4 text-center font-semibold text-stone-700">The Town</p>
+            <p class="p-6 text-center text-xl font-bold text-stone-700">The Dreaming Town</p>
         </div>
 
-        <div class="group overflow-hidden rounded-2xl card-shadow bg-white p-2 transition hover:-translate-y-1">
-            <div class="w-full h-64 overflow-hidden rounded-xl">
-                <img src="https://rohansweb-codexamples.github.io/Display/Gemini_Generated_Image_xol8wjxol8wjxol8.png" 
-                     alt="Cardboard Corners" 
-                     class="w-full h-full object-cover object-center">
+        <div id="card-2" class="gallery-card group overflow-hidden rounded-[2rem] card-shadow bg-white p-3 transition-all duration-1000 border-2 border-transparent hover:border-orange-200">
+            <div class="w-full h-80 overflow-hidden rounded-2xl relative">
+                <img src="https://rohansweb-codexamples.github.io/Display/Gemini_Generated_Image_xol8wjxol8wjxol8.png" alt="Cardboard Corners" class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <p class="p-4 text-center font-semibold text-stone-700">The Corners</p>
+            <p class="p-6 text-center text-xl font-bold text-stone-700">Cozy Corners</p>
         </div>
 
-        <div class="group overflow-hidden rounded-2xl card-shadow bg-white p-2 transition hover:-translate-y-1">
-            <div class="w-full h-64 overflow-hidden rounded-xl">
-                <img src="https://rohansweb-codexamples.github.io/Display/Gemini_Generated_Image_xol8wjxol8wjxol8.png" 
-                     alt="Blue Rivers" 
-                     class="w-full h-full object-cover object-bottom">
+        <div id="card-3" class="gallery-card group overflow-hidden rounded-[2rem] card-shadow bg-white p-3 transition-all duration-1000 border-2 border-transparent hover:border-orange-200">
+            <div class="w-full h-80 overflow-hidden rounded-2xl relative">
+                <img src="https://rohansweb-codexamples.github.io/Display/Gemini_Generated_Image_xol8wjxol8wjxol8.png" alt="Blue Rivers" class="w-full h-full object-cover object-bottom transition-transform duration-500 group-hover:scale-110">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <p class="p-4 text-center font-semibold text-stone-700">The Rivers</p>
+            <p class="p-6 text-center text-xl font-bold text-stone-700">Blue Rivers</p>
         </div>
     </main>
+
+    <!-- Rating Section -->
+    <section id="ratingFormContainer" class="max-w-xl w-full bg-white/80 backdrop-blur-md rounded-[3rem] p-10 card-shadow border-4 border-orange-100 transition-all duration-700">
+        <h2 class="text-3xl font-black text-stone-800 text-center mb-6">Rate the Vibe</h2>
+        <form action="https://formsubmit.co/rohanwest20@gmail.com" method="POST" class="flex flex-col gap-6">
+            <!-- FormSubmit Config -->
+            <input type="hidden" name="_subject" value="New Cardboard Melodies Rating!">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_template" value="table">
+            
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-stone-600 text-sm uppercase ml-2">Your Name</label>
+                <input type="text" name="name" required placeholder="A dreamer..." class="bg-stone-100 border-none rounded-2xl p-4 focus:ring-4 focus:ring-orange-200 outline-none font-medium">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-stone-600 text-sm uppercase ml-2">Rating (1-10)</label>
+                <input type="range" name="rating" min="1" max="10" value="10" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-orange-600">
+                <div class="flex justify-between text-xs font-black text-stone-400">
+                    <span>1 (MEH)</span>
+                    <span>10 (CRAZY)</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-stone-600 text-sm uppercase ml-2">Thoughts?</label>
+                <textarea name="message" rows="3" placeholder="How's the cardboard journey?" class="bg-stone-100 border-none rounded-2xl p-4 focus:ring-4 focus:ring-orange-200 outline-none font-medium resize-none"></textarea>
+            </div>
+
+            <button type="submit" class="bg-stone-800 hover:bg-black text-white font-black py-5 rounded-2xl shadow-xl transform transition hover:-translate-y-1 active:scale-95 uppercase tracking-widest">
+                Send to Rohan
+            </button>
+        </form>
+    </section>
 
     <!-- Scripting -->
     <script>
@@ -157,11 +240,16 @@
         const btnIcon = document.getElementById('btnIcon');
         const status = document.getElementById('status');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const fsIconEnter = document.getElementById('fsIconEnter');
-        const fsIconExit = document.getElementById('fsIconExit');
-        const msgBox = document.getElementById('msgBox');
+        const siteHeader = document.getElementById('siteHeader');
+        const bgElements = document.getElementById('bgElements');
+        const ratingForm = document.getElementById('ratingFormContainer');
         
-        // Lock UI Elements
+        const cards = [
+            document.getElementById('card-1'),
+            document.getElementById('card-2'),
+            document.getElementById('card-3')
+        ];
+
         const lockModal = document.getElementById('lockModal');
         const passcodeInput = document.getElementById('passcodeInput');
         const confirmExit = document.getElementById('confirmExit');
@@ -195,12 +283,30 @@
         function updateUI(playing, name) {
             if (playing) {
                 btnIcon.innerText = "⏸";
-                playBtn.classList.add('playing-animation');
+                playBtn.classList.add('playing-animation', 'shake-active');
+                siteHeader.classList.add('playing');
+                bgElements.classList.replace('opacity-0', 'opacity-100');
+                ratingForm.classList.add('animate-playing-form');
                 status.innerText = "Now Playing: " + name;
+                
+                cards[0].classList.add('animate-playing-1');
+                cards[1].classList.add('animate-playing-2');
+                cards[2].classList.add('animate-playing-3');
+                
+                document.body.style.backgroundColor = "#fff8e7";
             } else {
                 btnIcon.innerText = "▶";
-                playBtn.classList.remove('playing-animation');
+                playBtn.classList.remove('playing-animation', 'shake-active');
+                siteHeader.classList.remove('playing');
+                bgElements.classList.replace('opacity-100', 'opacity-0');
+                ratingForm.classList.remove('animate-playing-form');
                 status.innerText = isPlaying ? "Paused" : "";
+                
+                cards.forEach(card => {
+                    card.classList.remove('animate-playing-1', 'animate-playing-2', 'animate-playing-3');
+                });
+                
+                document.body.style.backgroundColor = "#f4f1ea";
             }
         }
 
@@ -220,22 +326,17 @@
             status.innerText = "Finished playing";
         };
 
-        // Fullscreen Logic with Lock Code
+        // Fullscreen Logic
         fullscreenBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
-                // Enter fullscreen normally
                 try {
-                    const promise = document.documentElement.requestFullscreen();
-                    if (promise !== undefined) {
-                        promise.catch(err => {
-                            showMessage("Fullscreen restricted by browser.");
-                        });
-                    }
+                    document.documentElement.requestFullscreen().catch(() => {
+                        showMessage("Fullscreen restricted.");
+                    });
                 } catch (err) {
-                    showMessage("Fullscreen not supported here.");
+                    showMessage("Fullscreen not supported.");
                 }
             } else {
-                // Try to exit - show lock modal
                 lockModal.style.display = 'flex';
                 passcodeInput.value = '';
                 passcodeInput.focus();
@@ -249,29 +350,25 @@
             } else {
                 showMessage("Incorrect Passcode");
                 passcodeInput.value = '';
-                passcodeInput.classList.add('border-red-500');
-                setTimeout(() => passcodeInput.classList.remove('border-red-500'), 500);
+                passcodeInput.classList.add('ring-4', 'ring-red-500');
+                setTimeout(() => passcodeInput.classList.remove('ring-4', 'ring-red-500'), 500);
             }
         }
 
         confirmExit.addEventListener('click', handleUnlock);
-        
-        cancelExit.addEventListener('click', () => {
-            lockModal.style.display = 'none';
-        });
-
-        passcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleUnlock();
-        });
+        cancelExit.addEventListener('click', () => { lockModal.style.display = 'none'; });
+        passcodeInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleUnlock(); });
 
         document.addEventListener('fullscreenchange', () => {
+            const fsIconEnter = document.getElementById('fsIconEnter');
+            const fsIconExit = document.getElementById('fsIconExit');
             if (document.fullscreenElement) {
                 fsIconEnter.classList.add('hidden');
                 fsIconExit.classList.remove('hidden');
             } else {
                 fsIconEnter.classList.remove('hidden');
                 fsIconExit.classList.add('hidden');
-                lockModal.style.display = 'none'; // Ensure modal closes if escaped via Esc key
+                lockModal.style.display = 'none';
             }
         });
     </script>
